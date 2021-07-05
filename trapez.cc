@@ -2,46 +2,71 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 // Testfunktionen als Funktor
 class Pol1 {
 public:
-  double operator()(double x) { return 3 * x + 2; }
+  double operator()(double x){ 
+    return 3 * x + 2; 
+  }
+};
+
+class Pol2 {
+public:
+  double operator()(double x){
+    return -2 * pow(x, 2) + 3 * x + 1;
+  }
 };
 
 class Gauss {
 public:
-  double operator()(double x) { return 1 / (sqrt(M_PI * 2)) * exp(-x * x / 2); }
+  double operator()(double x){ 
+    return 1 / (sqrt(M_PI * 2)) * exp(-x * x / 2); 
+  }
 };
 
 // berechnet Werte nach Trapezformel von I_0 bis I_N
-std::vector<double> trapez(double a, double b, int N) {
-  Pol1 f;
-  std::vector<double> I(N + 1); // Feld mit N+1 Eintraegen
+
+template<class Functor> vector<double> trapez(Functor f, double a, double b, int N) {
+  vector<double> I(N + 1); // Feld mit N+1 Eintraegen
   const double h = b - a;
   I[0] = h / 2 * (f(a) + f(b));
   for (int k = 1; k <= N; ++k) {
     int n = pow(2, k);
-    //...
-    I[k] = 0; // setze k-ten Wert im Feld
+    double sum = 0;
+    for(int i=1; i<=(n-1); i++){
+      sum += f(a+i*(h/n));
+    }
+
+    I[k] = (h/n) * ((f(a)/2) + (f(b)/2) + sum); // setze k-ten Wert im Feld
   }
   return I;
 }
 
 // berechnet die Richardsonextrapolation aus I(k-1)  und I(k)
-double richardson(double Iprev, double I) { return 0; }
+double richardson(double Iprev, double I) { 
+  return ((4*I)/3) - (Iprev/3); 
+}
 
 // berechet Naeherungen ueber das Romberg-Verfahren
 // I: Ergebnis von trapez()
-std::vector<std::vector<double>> romberg(std::vector<double> I) {
+vector<vector<double>> romberg(vector<double> I) {
   const int N = I.size() - 1;
-  std::vector<std::vector<double>> R(N + 1);
+  vector<vector<double>> R(N + 1);
+
   for (int k = 0; k <= N; ++k) {
     R[k].push_back(I[k]);
+  }
+  for (int n = 1; n <= N+1; n++){
+    for (int k = 0; k <= N-n; ++k){
+     double extr = R[k+1][n-1] + (R[k+1][n-1] - R[k][n-1])/(pow(2, 2*n) - 1);
+      R[k].push_back(extr);
+    }
   }
   return R;
 }
 
-/*
 void testeAufgabe1() {
   Pol1 f;
   std::vector<double> I_f = trapez(f, 0, 3, 3);
@@ -66,8 +91,10 @@ void testeAufgabe2() {
   for (auto row : Rf) {
     for (double val : row) {
       alle_richtig &= val == 19.5;
+      cout << val << endl;
       ++entries;
     }
+    cout << endl;
   }
   std::cout << "A2: alle Eintraege für f sind 1.5:" << (alle_richtig ? "ja" : "nein") << std::endl;
   std::cout << "A2: korrekte Zahl an Einträgen:" << (entries == 10 ? "ja" : "nein") << std::endl;
@@ -75,31 +102,63 @@ void testeAufgabe2() {
   std::vector<std::vector<double>> Rg = romberg(trapez(g, 0, 3, 3));
   std::cout << "A2: R[1][1] und R[2][1] für g gleich -1.5: " << ((Rg[1][1] == -1.5) && (Rg[2][1] == -1.5) ? " ja " : " nein") << std::endl;
 }
-*/
 
 int main() {
-  // Testfunktion:
+  // Testfunktionen:
   Pol1 f;
-  std::cout << "f(0) = " << f(0) << '\n';
+  Pol2 g;
+  Gauss j;
+  cout << "Funktion 1: f(0) = " << f(0) << endl;
+  cout << "Funktion 2: g(0) = " << g(0) << endl;
+  cout << "Gauss-Funktion: j(0) = " << j(0) << endl;
+
   // berechne Trapezformel fuer f
-  std::vector<double> tf = trapez(0., 3., 3);
-  std::cout
-      << "#############################################################\n";
+  vector<double> tf = trapez(f, 0., 3., 3);
+  vector<double> tg = trapez(g, 0., 3., 3);
+  vector<double> tj = trapez(j, 0., 3., 3);
+
+  cout << "#############################################################\n";
+
   // Ausgabe:
   std::cout << "Trapez:\n";
-  for (unsigned int i = 0; i < tf.size(); ++i) { // Schleife ueber Werte im Feld
-    std::cout << "I_" << i << " = " << tf[i] << std::endl;
+  for (unsigned int i = 0; i < tf.size(); ++i) {
+    cout << "Funktion f: I_" << i << " = " << tf[i] << endl;
   }
-  std::cout << "Romberg:\n";
-  std::vector<std::vector<double> > R = romberg(tf);
+  for (unsigned int i = 0; i < tg.size(); ++i) {
+    cout << "Funktion g: I_" << i << " = " << tg[i] << endl;
+  }
+  for (unsigned int i = 0; i < tj.size(); ++i) {
+    cout << "Funktion j: I_" << i << " = " << tj[i] << endl;
+  }
+  cout << endl;
+
+  cout << "Richardson-Extrapolation:\n";
+  cout << "Funktion f:" << endl;
+  for (unsigned int i = 1; i < tf.size(); ++i) {
+    cout << "I_" << i-1 << "-" << "I_" << i <<  " = " << richardson(tf[i-1], tf[i]) << endl;
+  }
+  cout << "Funktion g:" << endl;
+  for (unsigned int i = 1; i < tg.size(); ++i) {
+    cout << "I_" << i-1 << "-" << "I_" << i << " = " << richardson(tg[i-1], tg[i]) << endl;
+  }
+  cout << "Funktion j:" << endl;
+  for (unsigned int i = 1; i < tj.size(); ++i) {
+    cout << "I_" << i-1 << "-" << "I_" << i <<  " = " << richardson(tj[i-1], tj[i]) << endl;
+  }
+  cout << endl;
+
+  cout << "Romberg:\n";
+  vector<vector<double> > R = romberg(tf);
   for(int k = 0, l = R.size() ;  k < l ; ++k) {
     for(int n = 0, m = R[k].size() ;  n < m ; ++n) {
-      std::cout << R[k][n] << " ";
+      cout << R[k][n] << " ";
     }
-    std::cout << std::endl;
+    cout << endl;
   }
-  /*
+  //"Teste-Aufgaben" Aufrufe
+  cout << endl << "Aufgabe 1" << endl;
   testeAufgabe1();
+  cout << endl << "Aufgabe 2" << endl;
   testeAufgabe2();
-  */
+  
 }
