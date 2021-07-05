@@ -96,7 +96,7 @@ void testeAufgabe2() {
     }
     cout << endl;
   }
-  std::cout << "A2: alle Eintraege für f sind 19.5:" << (alle_richtig ? "ja" : "nein") << std::endl;
+  std::cout << "A2: alle Eintraege für f sind 1.5:" << (alle_richtig ? "ja" : "nein") << std::endl;
   std::cout << "A2: korrekte Zahl an Einträgen:" << (entries == 10 ? "ja" : "nein") << std::endl;
   Pol2 g;
   std::vector<std::vector<double>> Rg = romberg(trapez(g, 0, 3, 3));
