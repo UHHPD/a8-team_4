@@ -54,8 +54,15 @@ double richardson(double Iprev, double I) {
 vector<vector<double>> romberg(vector<double> I) {
   const int N = I.size() - 1;
   vector<vector<double>> R(N + 1);
+
   for (int k = 0; k <= N; ++k) {
     R[k].push_back(I[k]);
+  }
+  for (int n = 1; n <= N+1; n++){
+    for (int k = 0; k <= N-n; ++k){
+     double extr = R[k+1][n-1] + (R[k+1][n-1] - R[k][n-1])/(pow(2, 2*n) - 1);
+      R[k].push_back(extr);
+    }
   }
   return R;
 }
@@ -84,10 +91,12 @@ void testeAufgabe2() {
   for (auto row : Rf) {
     for (double val : row) {
       alle_richtig &= val == 19.5;
+      cout << val << endl;
       ++entries;
     }
+    cout << endl;
   }
-  std::cout << "A2: alle Eintraege für f sind 1.5:" << (alle_richtig ? "ja" : "nein") << std::endl;
+  std::cout << "A2: alle Eintraege für f sind 19.5:" << (alle_richtig ? "ja" : "nein") << std::endl;
   std::cout << "A2: korrekte Zahl an Einträgen:" << (entries == 10 ? "ja" : "nein") << std::endl;
   Pol2 g;
   std::vector<std::vector<double>> Rg = romberg(trapez(g, 0, 3, 3));
